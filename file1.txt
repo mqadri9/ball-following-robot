@@ -1,0 +1,79 @@
+int ultraSoundSignalPins[] = {8,9}; // Front Left,Front, Front Right, Rear Ultrasound signal pins
+char *pingString[] = {"Front Left ", "Front Right "}; // just something to print to indicate direction
+
+#define LA 7
+#define LB 5
+#define LPWM 6
+
+#define RA 2
+#define RB 4
+#define RPWM 3
+
+void setup()
+{
+ Serial.begin(9600);
+  pinMode(LA, OUTPUT);
+  pinMode(LB, OUTPUT);
+  pinMode(LPWM, OUTPUT);
+  pinMode(RA, OUTPUT);
+  pinMode(RB, OUTPUT);
+  pinMode(RPWM, OUTPUT);
+}
+
+//Ping function
+unsigned long ping(int index)
+{
+ unsigned long echo;
+
+ pinMode(ultraSoundSignalPins[index], OUTPUT); // Switch signalpin to output
+ digitalWrite(ultraSoundSignalPins[index], LOW); // Send low pulse
+ delayMicroseconds(2); // Wait for 2 microseconds
+ digitalWrite(ultraSoundSignalPins[index], HIGH); // Send high pulse
+ delayMicroseconds(5); // Wait for 5 microseconds
+ digitalWrite(ultraSoundSignalPins[index], LOW); // Holdoff
+ pinMode(ultraSoundSignalPins[index], INPUT); // Switch signalpin to input
+ digitalWrite(ultraSoundSignalPins[index], HIGH); // Turn on pullup resistor
+ echo = pulseIn(ultraSoundSignalPins[index], HIGH); //Listen for echo
+ return (echo / 58.138) * .39; //convert to CM then to inches
+}
+
+void loop()
+{
+   unsigned long leftMeas=0;
+ unsigned long rightMeas=0;
+ unsigned long ultrasoundValue;
+ for(int i=0; i < 2; i++){
+ ultrasoundValue = ping(i);
+   if(i==0){
+   leftMeas=ultrasoundValue;
+   }
+   else if(i==1) {
+   rightMeas=ultrasoundValue;
+   }
+   Serial.print(pingString[i]);
+   Serial.print(ultrasoundValue);
+   Serial.print("cm, ");    
+   delay(50);
+
+ }
+  if (leftMeas<20 || rightMeas<20)  {
+   Serial.println("turn");
+  digitalWrite(LA,HIGH) ;
+  digitalWrite(LB,LOW) ;
+  analogWrite(LPWM,64) ;
+  digitalWrite(RA,LOW) ;
+  digitalWrite(RB,HIGH) ;
+  analogWrite(RPWM,64) ;
+ }
+ else {
+   Serial.println("MOVE FORWARD");
+  digitalWrite(LA, HIGH) ;
+  digitalWrite(LB,LOW) ;
+  analogWrite(LPWM,100) ;
+  digitalWrite(RA,HIGH) ;
+  digitalWrite(RB,LOW) ;
+  analogWrite(RPWM,100) ;
+ }
+ Serial.println();
+ delay(50);
+} 
